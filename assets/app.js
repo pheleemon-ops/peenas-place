@@ -11,7 +11,86 @@ let siteSettings = {};
 let products = [];
 let cart = [];
 let selectedProduct = null;
-const API_BASE = "/peenas-place/api";
+const API_BASE = "api";
+const STATIC_PRODUCTS = [
+    {
+        id: 1,
+        name: "Curated Accent Chair",
+        category: "Furniture",
+        price: 185000,
+        stock_status: "In stock",
+        image: "uploads/products/photo-1.avif",
+        description: "A sculptural accent chair selected for warm, welcoming interiors.",
+        active: 1,
+        featured: 1
+    },
+    {
+        id: 2,
+        name: "Contemporary Living Edit",
+        category: "Furniture",
+        price: 240000,
+        stock_status: "In stock",
+        image: "uploads/products/photo-2.avif",
+        description: "A refined piece with an easy silhouette and timeless character.",
+        active: 1,
+        featured: 1
+    },
+    {
+        id: 3,
+        name: "Textured Ceramic Vessel",
+        category: "Decor",
+        price: 45000,
+        stock_status: "In stock",
+        image: "uploads/products/photo-3.avif",
+        description: "A tactile decorative accent for shelves, consoles and side tables.",
+        active: 1,
+        featured: 1
+    },
+    {
+        id: 4,
+        name: "Natural Form Table Lamp",
+        category: "Lighting",
+        price: 78000,
+        stock_status: "In stock",
+        image: "uploads/products/photo-4.avif",
+        description: "Soft ambient lighting with a considered, organic form.",
+        active: 1,
+        featured: 1
+    },
+    {
+        id: 5,
+        name: "Handwoven Throw",
+        category: "Textiles",
+        price: 32000,
+        stock_status: "In stock",
+        image: "uploads/products/photo-5.avif",
+        description: "A versatile layer that adds texture and comfort to your space.",
+        active: 1,
+        featured: 0
+    },
+    {
+        id: 6,
+        name: "Minimalist Side Table",
+        category: "Furniture",
+        price: 95000,
+        stock_status: "In stock",
+        image: "uploads/products/photo-6.avif",
+        description: "A compact side table designed for everyday living.",
+        active: 1,
+        featured: 0
+    },
+    {
+        id: 7,
+        name: "Decorative Stoneware",
+        category: "Decor",
+        price: 28000,
+        stock_status: "In stock",
+        image: "uploads/products/photo-7.avif",
+        description: "A quiet finishing touch for a shelf, table or entryway.",
+        active: 1,
+        featured: 0
+    }
+];
 
 
 /* =========================================================
@@ -142,10 +221,7 @@ async function loadSiteSettings() {
 
     } catch (error) {
 
-        console.error(
-            "Settings loading error:",
-            error
-        );
+        console.warn("Using storefront defaults because the settings API is unavailable.", error);
 
     }
 }
@@ -361,10 +437,10 @@ async function loadProducts() {
 
     } catch (error) {
 
-        console.error(
-            "PRODUCT LOAD ERROR:",
-            error
-        );
+        products = STATIC_PRODUCTS;
+        renderProducts(products);
+        renderFeaturedProducts(products);
+        console.warn("Using the static catalog because the products API is unavailable.", error);
 
     }
 }
@@ -1225,6 +1301,8 @@ async function handleCheckout(event) {
     };
 
 
+    let orderSaved = false;
+
     try {
 
         const response =
@@ -1248,14 +1326,19 @@ async function handleCheckout(event) {
             await response.json();
 
 
-        if (!response.ok || !data.success) {
+        orderSaved =
+            response.ok &&
+            data.success === true;
 
-            throw new Error(
-                data.message ||
-                "Unable to save order."
-            );
+    } catch (error) {
 
-        }
+        console.warn(
+            "Order API unavailable; continuing with WhatsApp checkout.",
+            error
+        );
+    }
+
+    try {
 
 
         const whatsappMessage =
@@ -1285,7 +1368,9 @@ async function handleCheckout(event) {
         closeCartDrawer();
 
         showToast(
-            "Order saved. Opening WhatsApp..."
+            orderSaved
+                ? "Order saved. Opening WhatsApp..."
+                : "Opening WhatsApp to complete your order..."
         );
 
 
